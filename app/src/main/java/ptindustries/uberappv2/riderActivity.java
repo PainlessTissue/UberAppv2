@@ -66,9 +66,9 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             if(rider.lastKnownLocation != null)
             {
                 ParseObject userLocationObject = new ParseObject("Request");
-                ParseGeoPoint riderLocation = new ParseGeoPoint(rider.lastKnownLocation.getLatitude(), rider.lastKnownLocation.getLongitude());
+                rider.riderGeo = new ParseGeoPoint(rider.lastKnownLocation.getLatitude(), rider.lastKnownLocation.getLongitude());
                 userLocationObject.put("username", rider.username);
-                userLocationObject.put("location", riderLocation);
+                userLocationObject.put("location", rider.riderGeo);
 
                 userLocationObject.saveInBackground(new SaveCallback()
                 {
