@@ -5,4 +5,6 @@
     <string name="riderTextView">Rider</string>
     <string name="driverTextView">Driver</string>
     <string name="uberImage">Uber</string>
+    <string name="callUber">Call Uber</string>
+    <string name="cancelUber">Cancel Uber</string>
 </resources>

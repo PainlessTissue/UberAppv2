@@ -26,20 +26,16 @@ public class MainActivity extends AppCompatActivity
 
     public void checkState(View view)
     {
-        String userType = "rider";
-
         if(switch1.isChecked()) //driver
         {
-            userType = "driver";
-
-            ParseUser.getCurrentUser().put("riderOrDriver", userType);
+            ParseUser.getCurrentUser().put("riderOrDriver", "driver");
 
             startActivity(new Intent(getApplicationContext(), distanceActivity.class));
         }
 
         else //rider
         {
-            ParseUser.getCurrentUser().put("riderOrDriver", userType);
+            ParseUser.getCurrentUser().put("riderOrDriver", "rider");
 
             startActivity(new Intent(getApplicationContext(), riderActivity.class));
 
