@@ -22,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.FindCallback;
 import com.parse.ParseException;
@@ -54,8 +55,6 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         rider = new RidersClass(ParseUser.getCurrentUser().getUsername());
-
-        locationShit();
     }
 
     public void callUber(View view)
@@ -110,7 +109,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
         }
     }
 
-    public void updateMap(Location location)
+    public void updateMap(final Location location)
     {
         if(mMap != null)
         {
@@ -118,8 +117,57 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
 
             mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your location"));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
+
+            ParseQuery<ParseObject> q = new ParseQuery<>("Request");
+            q.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
+            q.setLimit(1);
+
+
+            q.findInBackground(new FindCallback<ParseObject>()
+            {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e)
+                {
+                    if(e == null)
+                    {
+                        for(ParseObject o : objects)
+                        {
+                            //get the variable that stores a riders' drivers' location
+                            ParseGeoPoint driversLocation = o.getParseGeoPoint("driversLocation");
+                            if(driversLocation != null)
+                            {
+                                //and update the riders' map with the drivers location
+                                LatLng driversLatLng = new LatLng(driversLocation.getLatitude(), driversLocation.getLongitude());
+                                mMap.addMarker(new MarkerOptions().title("Your drivers location").position(driversLatLng));
+
+                                //all this animates the camera to fit between the two locations
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                builder.include(driversLatLng);
+                                builder.include(new LatLng(location.getLatitude(), location.getLongitude()));
+                                LatLngBounds bounds = builder.build();
+
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+                                mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
+                                {
+                                    @Override
+                                    public void onCancel() {}
+
+                                    @Override
+                                    public void onFinish()
+                                    {
+                                        CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                                        mMap.animateCamera(zout);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            });
         }
+
     }
+
 
     public void locationShit()
     {
@@ -203,5 +251,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap)
     {
         mMap = googleMap;
+
+        locationShit();
     }
 }

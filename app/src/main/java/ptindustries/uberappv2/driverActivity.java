@@ -6,6 +6,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -20,6 +21,7 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
     private GoogleMap mMap;
     ParseGeoPoint ridersLocation;
-
+    public static ParseObject rider;
 
     protected void confirmUber(View view)
     {
@@ -38,8 +40,26 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
         double rLong = ridersLocation.getLongitude();
 
         //this starts up google maps with the direction between two points
-        Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+        final Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
+
+        //this updates and tells the rider who
+        rider.put("driversLocation", distanceActivity.driver.driverGeo);
+/*        rider.saveInBackground(new SaveCallback()
+        {
+            @Override
+            public void done(ParseException e)
+            {
+                if(e == null)
+                    startActivity(intent);
+
+                else
+                    Toast.makeText(driverActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+            }
+        });
+*/
+        rider.saveInBackground();
+
         startActivity(intent);
     }
 
@@ -85,15 +105,13 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
             {
                 if (e == null)
                 {
-                    Log.i("e!=", "null");
-                    Log.i("size", Integer.toString(objects.size()));
                     if (objects.size() > 0)
                     {
                         //this could in the future lead to some problems
                         //my thoughts are if somebody were to join while calculating this, then the position would get changed and theyd recieve the wrong user
                         //but for now this is the best I can do
-                        ParseObject d = objects.get(position);
-                        ridersLocation = d.getParseGeoPoint("location");
+                        rider = objects.get(position);
+                        ridersLocation = rider.getParseGeoPoint("location");
 
                         LatLng driversLatLng = new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude());
                         LatLng ridersLatLng = new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude());

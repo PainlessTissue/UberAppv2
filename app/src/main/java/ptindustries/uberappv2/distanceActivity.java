@@ -66,7 +66,8 @@ public class distanceActivity extends AppCompatActivity
                             for(ParseObject obj : objects)
                             {
                                 ParseGeoPoint riderGeo = obj.getParseGeoPoint("location");
-                                arrayList.add(Double.toString(driver.driverGeo.distanceInMilesTo(riderGeo)) + " miles away");
+                                double roundedNumber = Math.round(driver.driverGeo.distanceInMilesTo(riderGeo)); //round the number so it isnt huge
+                                arrayList.add(Double.toString(roundedNumber) + " miles away");
                             }
 
                 }
@@ -101,6 +102,8 @@ public class distanceActivity extends AppCompatActivity
             public void onLocationChanged(Location location)
             {
                 driver.lastKnownLocation = location;
+
+                driverActivity.rider.put("driversLocation", driver.driverGeo);
             }
 
             @Override
