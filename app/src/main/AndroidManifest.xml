@@ -39,6 +39,10 @@
         </activity>
         <activity android:name=".distanceActivity">
         </activity>
+        <activity
+            android:name=".driverActivity"
+            android:label="@string/title_activity_driver">
+        </activity>
     </application>
 
 </manifest>

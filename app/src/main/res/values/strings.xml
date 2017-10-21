@@ -7,4 +7,5 @@
     <string name="uberImage">Uber</string>
     <string name="callUber">Call Uber</string>
     <string name="cancelUber">Cancel Uber</string>
+    <string name="title_activity_driver">Map</string>
 </resources>

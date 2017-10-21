@@ -2,6 +2,7 @@ package ptindustries.uberappv2;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -29,7 +30,7 @@ import java.util.List;
 
 public class distanceActivity extends AppCompatActivity
 {
-    DriverClass driver;
+    static DriverClass driver;
     LocationListener locationListener;
     LocationManager locationManager;
 
@@ -77,7 +78,10 @@ public class distanceActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
+                Intent intent = new Intent(getApplicationContext(), driverActivity.class);
 
+                intent.putExtra("location", position);
+                startActivity(intent);
             }
         });
 
