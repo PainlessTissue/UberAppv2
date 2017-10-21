@@ -1,9 +1,11 @@
 package ptindustries.uberappv2;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -26,6 +28,22 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
     private GoogleMap mMap;
     ParseGeoPoint ridersLocation;
+
+
+    protected void confirmUber(View view)
+    {
+        double dLat = distanceActivity.driver.driverGeo.getLatitude();
+        double dLong = distanceActivity.driver.driverGeo.getLongitude();
+        double rLat = ridersLocation.getLatitude();
+        double rLong = ridersLocation.getLongitude();
+
+        //this starts up google maps with the direction between two points
+        Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
+        startActivity(intent);
+    }
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -71,18 +89,23 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                     Log.i("size", Integer.toString(objects.size()));
                     if (objects.size() > 0)
                     {
-                        //get the position of where the rider was at and assign their location
-                        //ridersLocation = objects.get(position).getParseGeoPoint("location");
+                        //this could in the future lead to some problems
+                        //my thoughts are if somebody were to join while calculating this, then the position would get changed and theyd recieve the wrong user
+                        //but for now this is the best I can do
                         ParseObject d = objects.get(position);
                         ridersLocation = d.getParseGeoPoint("location");
 
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude())).title("Riders location"));
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude())).title("Drivers location"));
+                        LatLng driversLatLng = new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude());
+                        LatLng ridersLatLng = new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude());
+
+                        mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
+                        mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
                         //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
 
+                        //all this animates the camera to fit between the two locations
                         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                        builder.include(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()));
-                        builder.include(new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude()));
+                        builder.include(driversLatLng);
+                        builder.include(ridersLatLng);
                         LatLngBounds bounds = builder.build();
 
                         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
@@ -101,24 +124,8 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                             }
                         });
                     }
-
                 }
             }
         });
     }
 }
-
-
-
-        // Add a marker in Sydney and move the camera
-/*        if(ridersLocation != null)
-        {
-            mMap.addMarker(new MarkerOptions().position(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude())).title("Riders location"));
-            mMap.addMarker(new MarkerOptions().position(new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude())).title("Drivers location"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
-        }
-*/
-
-
-
-

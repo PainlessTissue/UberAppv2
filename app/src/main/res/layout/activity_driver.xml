@@ -5,4 +5,28 @@
           android:name="com.google.android.gms.maps.SupportMapFragment"
           android:layout_width="match_parent"
           android:layout_height="match_parent"
-          tools:context="ptindustries.uberappv2.driverActivity"/>
+          tools:context="ptindustries.uberappv2.driverActivity">
+
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:layout_marginBottom="20dp"
+        android:text="@string/confirmUber"
+        android:padding="10dp"
+        android:paddingEnd="30dp"
+        android:paddingStart="30dp"
+        android:onClick="confirmUber"
+        android:id="@+id/callUberButton"/>
+
+
+</fragment>
+
+
+
+
+
+
+
