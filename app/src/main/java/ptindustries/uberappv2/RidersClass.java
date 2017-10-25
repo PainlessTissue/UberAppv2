@@ -2,24 +2,60 @@ package ptindustries.uberappv2;
 
 import android.location.Location;
 
+import com.parse.ParseClassName;
 import com.parse.ParseGeoPoint;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 
-/**
- * Created by ryaca on 10/20/2017.
- */
-
-public class RidersClass
+@ParseClassName("RidersClass")
+class RidersClass extends ParseObject
 {
-    Location lastKnownLocation;
-    Location driversLocation;
-    String username;
-    ParseGeoPoint riderGeo;
+    private String username;
+    private Location lastKnownLocation;
+    private ParseGeoPoint ridersGeo;
+    private Location driversLocation;
+    private ParseGeoPoint driversGeo;
 
-    RidersClass(String newUsername)
+
+    RidersClass()
     {
+        put("username", ParseUser.getCurrentUser().getUsername());
+        username = ParseUser.getCurrentUser().getUsername();
+
         lastKnownLocation = null;
-        username = newUsername;
+        ridersGeo = null;
         driversLocation = null;
-        riderGeo = null;
+        driversGeo = null;
     }
+
+    void setLastKnownLocation(Location lastKnownLocation)
+    {
+        put("ridersLocation", lastKnownLocation);
+        this.lastKnownLocation = lastKnownLocation;
+
+        ParseGeoPoint rGeo = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+        put("ridersGeo", rGeo);
+        this.ridersGeo = rGeo;
+    }
+
+    void setGeoLocation(ParseGeoPoint rGeo)
+    {
+        put("ridersGeo", rGeo);
+        this.ridersGeo = rGeo;
+    }
+
+    void setDriversLocation(Location driversLocation) {
+
+        put("driversLocation", driversLocation);
+        this.driversLocation = driversLocation;
+
+        ParseGeoPoint dGeo = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+        put("ridersGeo", dGeo);
+        this.ridersGeo = dGeo;
+    }
+
+    String getUsername() { return username; }
+    Location getLastKnownLocation() { return lastKnownLocation; }
+    ParseGeoPoint getRidersGeo() { return driversGeo; }
+    ParseGeoPoint getDriversGeo() {return driversGeo; }
 }

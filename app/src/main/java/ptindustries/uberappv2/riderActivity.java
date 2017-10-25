@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.DeleteCallback;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
@@ -54,7 +56,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        rider = new RidersClass(ParseUser.getCurrentUser().getUsername());
+        rider = new RidersClass();
     }
 
     public void callUber(View view)
@@ -62,14 +64,12 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
         final Button uberButton = (Button) findViewById(R.id.callUberButton);
         if(!uberCalled)
         {
-            if(rider.lastKnownLocation != null)
+            if(rider.getLastKnownLocation() != null)
             {
-                ParseObject userLocationObject = new ParseObject("Request");
-                rider.riderGeo = new ParseGeoPoint(rider.lastKnownLocation.getLatitude(), rider.lastKnownLocation.getLongitude());
-                userLocationObject.put("username", rider.username);
-                userLocationObject.put("location", rider.riderGeo);
+                //since rider is a parseObject we can just set its location without having to find the username to set it (like in previous branch)
+                rider.setGeoLocation(new ParseGeoPoint(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude()));
 
-                userLocationObject.saveInBackground(new SaveCallback()
+                rider.saveInBackground(new SaveCallback()
                 {
                     @Override
                     public void done(ParseException e)
@@ -77,7 +77,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
                         if(e == null)
                         {
                             uberCalled = true;
-                            uberButton.setText(R.string.cancelUber); //set to cancel uber
+                            uberButton.setText(R.string.cancelUber);
                         }
 
                         else
@@ -89,23 +89,20 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         else //uber has been called
         {
-            ParseQuery<ParseObject> q = new ParseQuery<>("Request");
-            q.whereEqualTo("username", rider.username);
-
-            q.findInBackground(new FindCallback<ParseObject>()
-            {
+            //since rider is a parseObject instead of just a class, we can delete it right from Parse
+            //instead of looping through to find it (like in previous branch)
+            rider.deleteInBackground(new DeleteCallback() {
                 @Override
-                public void done(List<ParseObject> objects, ParseException e)
-                {
+                public void done(ParseException e) {
                     if(e == null)
-                        if(objects.size() > 0)
-                            for(ParseObject obj : objects)
-                                obj.deleteInBackground();
+                        Log.i("Delete", "Sucessful");
+                    else
+                        Log.i("Delete", "unsucessful");
                 }
             });
 
             uberCalled = false;
-            uberButton.setText(R.string.callUber); //set to call uber
+            uberButton.setText(R.string.callUber);
         }
     }
 
@@ -118,52 +115,31 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your location"));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
 
-            ParseQuery<ParseObject> q = new ParseQuery<>("Request");
-            q.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
-            q.setLimit(1);
-
-
-            q.findInBackground(new FindCallback<ParseObject>()
+            if(rider.getDriversGeo() != null)
             {
-                @Override
-                public void done(List<ParseObject> objects, ParseException e)
+                LatLng driversLatLng = new LatLng(rider.getDriversGeo().getLatitude(), rider.getDriversGeo().getLongitude());
+                mMap.addMarker(new MarkerOptions().title("Your drivers location").position(driversLatLng));
+
+                //all this animates the camera to fit between the two locations
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                builder.include(driversLatLng);
+                builder.include(new LatLng(location.getLatitude(), location.getLongitude()));
+                LatLngBounds bounds = builder.build();
+
+                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+                mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
                 {
-                    if(e == null)
+                    @Override
+                    public void onCancel() {}
+
+                    @Override
+                    public void onFinish()
                     {
-                        for(ParseObject o : objects)
-                        {
-                            //get the variable that stores a riders' drivers' location
-                            ParseGeoPoint driversLocation = o.getParseGeoPoint("driversLocation");
-                            if(driversLocation != null)
-                            {
-                                //and update the riders' map with the drivers location
-                                LatLng driversLatLng = new LatLng(driversLocation.getLatitude(), driversLocation.getLongitude());
-                                mMap.addMarker(new MarkerOptions().title("Your drivers location").position(driversLatLng));
-
-                                //all this animates the camera to fit between the two locations
-                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                                builder.include(driversLatLng);
-                                builder.include(new LatLng(location.getLatitude(), location.getLongitude()));
-                                LatLngBounds bounds = builder.build();
-
-                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                                mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
-                                {
-                                    @Override
-                                    public void onCancel() {}
-
-                                    @Override
-                                    public void onFinish()
-                                    {
-                                        CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
-                                        mMap.animateCamera(zout);
-                                    }
-                                });
-                            }
-                        }
+                        CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                        mMap.animateCamera(zout);
                     }
-                }
-            });
+                });
+            }
         }
 
     }
@@ -178,28 +154,19 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onLocationChanged(Location location)
             {
-                rider.lastKnownLocation = location;
+                rider.setLastKnownLocation(location);
 
                 updateMap(location);
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras)
-            {
-
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
             @Override
-            public void onProviderEnabled(String provider)
-            {
-
-            }
+            public void onProviderEnabled(String provider) {}
 
             @Override
-            public void onProviderDisabled(String provider)
-            {
-
-            }
+            public void onProviderDisabled(String provider) {}
         };
 
         if(Build.VERSION.SDK_INT >= 23)
@@ -210,10 +177,10 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             else
             {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                rider.lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
 
-                if(rider.lastKnownLocation != null)
-                    updateMap(rider.lastKnownLocation);
+                if(rider.getLastKnownLocation() != null)
+                    updateMap(rider.getLastKnownLocation());
             }
         }
 
@@ -232,9 +199,9 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             {
                 //locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                rider.lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
 
-                updateMap(rider.lastKnownLocation);
+                updateMap(rider.getLastKnownLocation());
             }
     }
 

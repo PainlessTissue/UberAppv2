@@ -3,25 +3,40 @@ package ptindustries.uberappv2;
 import android.location.Location;
 
 import com.parse.Parse;
+import com.parse.ParseClassName;
 import com.parse.ParseGeoPoint;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 
-/**
- * Created by ryaca on 10/20/2017.
- */
-
-public class DriverClass
+@ParseClassName("DriverClass")
+class DriverClass extends ParseObject
 {
-    Location lastKnownLocation;
-    Location ridersLocation;
-    String username;
-    ParseGeoPoint driverGeo;
+    private String username;
+    private Location lastKnownLocation;
+    private ParseGeoPoint driverGeo;
 
-    DriverClass(String newUsername)
+    DriverClass()
     {
+        put("username", ParseUser.getCurrentUser().getUsername());
+        username = ParseUser.getCurrentUser().getUsername();
         lastKnownLocation = null;
-        ridersLocation = null;
-        username = newUsername;
         driverGeo = null;
     }
+
+    public void setLocation(Location location)
+    {
+        put("location", location);
+        lastKnownLocation = location;
+
+        ParseGeoPoint dGeo = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
+        put("driverGeoPoint", dGeo);
+        driverGeo = dGeo;
+    }
+
+    public String getUsername() { return username; }
+    public ParseGeoPoint getDriverGeo() { return driverGeo; }
+    public Location getLastKnownLocation() { return lastKnownLocation; }
+
+
 
 }
