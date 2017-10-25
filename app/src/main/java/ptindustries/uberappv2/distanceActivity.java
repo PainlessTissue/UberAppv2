@@ -45,16 +45,19 @@ public class distanceActivity extends AppCompatActivity
         ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
         listView.setAdapter(arrayAdapter);
 
-        driver = new DriverClass(ParseUser.getCurrentUser().getUsername());
+        driver = new DriverClass();
 
         locationShit();
 
-        if(driver.lastKnownLocation != null)
+        if(driver.getLastKnownLocation() != null)
         {
-            driver.driverGeo = new ParseGeoPoint(driver.lastKnownLocation.getLatitude(), driver.lastKnownLocation.getLongitude());
+            //previous code (may not be needed)
+            //driver.setParseGeo(new ParseGeoPoint(driver.getLastKnownLocation().getLatitude(), driver.getLastKnownLocation().getLongitude()));
 
-            ParseQuery<ParseObject> q = new ParseQuery<>("Request");
-            q.whereNear("location", driver.driverGeo);
+            // TODO: 10/25/2017 Take a look at this. This may be able to be changed
+            ParseQuery<ParseObject> q = new ParseQuery<>("RidersClass");
+            q.whereNear("ridersGeo", driver.getDriverGeoPoint());
+
 
             q.findInBackground(new FindCallback<ParseObject>()
             {
@@ -65,11 +68,10 @@ public class distanceActivity extends AppCompatActivity
                         if(objects.size() > 0)
                             for(ParseObject obj : objects)
                             {
-                                ParseGeoPoint riderGeo = obj.getParseGeoPoint("location");
-                                double roundedNumber = Math.round(driver.driverGeo.distanceInMilesTo(riderGeo)); //round the number so it isnt huge
+                                ParseGeoPoint riderGeo = obj.getParseGeoPoint("ridersGeo");
+                                double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)); //round the number so it isnt huge
                                 arrayList.add(Double.toString(roundedNumber) + " miles away");
                             }
-
                 }
             });
         }
@@ -85,7 +87,6 @@ public class distanceActivity extends AppCompatActivity
                 startActivity(intent);
             }
         });
-
     }
 
 
@@ -101,28 +102,19 @@ public class distanceActivity extends AppCompatActivity
             @Override
             public void onLocationChanged(Location location)
             {
-                driver.lastKnownLocation = location;
+                driver.setLastKnownLocation(location);
 
-                driverActivity.rider.put("driversLocation", driver.driverGeo);
+                driverActivity.rider.setDriversLocation(location);
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras)
-            {
-
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
             @Override
-            public void onProviderEnabled(String provider)
-            {
-
-            }
+            public void onProviderEnabled(String provider) {}
 
             @Override
-            public void onProviderDisabled(String provider)
-            {
-
-            }
+            public void onProviderDisabled(String provider) {}
         };
 
         if(Build.VERSION.SDK_INT >= 23)
@@ -133,7 +125,7 @@ public class distanceActivity extends AppCompatActivity
             else
             {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                driver.lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                driver.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
             }
         }
 

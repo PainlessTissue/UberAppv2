@@ -44,7 +44,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
     private LocationListener locationListener;
     private boolean uberCalled = false;
 
-    public static RidersClass rider;
+    public RidersClass rider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)

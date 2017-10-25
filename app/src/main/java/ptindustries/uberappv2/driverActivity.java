@@ -29,22 +29,26 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 {
 
     private GoogleMap mMap;
-    ParseGeoPoint ridersLocation;
-    public static ParseObject rider;
+
+    //this object is used so, when the users clicks on who they want to drive, we can modify their
+    //data throughout the program
+    public static RidersClass rider;
 
     protected void confirmUber(View view)
     {
-        double dLat = distanceActivity.driver.driverGeo.getLatitude();
-        double dLong = distanceActivity.driver.driverGeo.getLongitude();
-        double rLat = ridersLocation.getLatitude();
-        double rLong = ridersLocation.getLongitude();
+        //as much as I wouldnt like to make all these variables,
+        //it makes setting the api much nicer looking
+        double dLat = distanceActivity.driver.getDriverGeoPoint().getLatitude();
+        double dLong = distanceActivity.driver.getDriverGeoPoint().getLongitude();
+        double rLat = rider.getLastKnownLocation().getLatitude();
+        double rLong = rider.getLastKnownLocation().getLongitude();
 
         //this starts up google maps with the direction between two points
         final Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
 
         //this updates and tells the rider who
-        rider.put("driversLocation", distanceActivity.driver.driverGeo);
+        rider.setDriversLocation(distanceActivity.driver.getLastKnownLocation());
 /*        rider.saveInBackground(new SaveCallback()
         {
             @Override
@@ -95,52 +99,52 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
         final int position = intent.getIntExtra("location", 90);
 
-        ParseQuery<ParseObject> q = new ParseQuery<>("Request");
-        q.whereNear("location", distanceActivity.driver.driverGeo);
+        ParseQuery<RidersClass> q = new ParseQuery<>("RidersClass");
+        q.whereNear("driversLocation", distanceActivity.driver.getDriverGeoPoint());
 
-        q.findInBackground(new FindCallback<ParseObject>()
+        // TODO: 10/25/2017 Look a this entire loop. May cause crashes
+        q.findInBackground(new FindCallback<RidersClass>()
         {
             @Override
-            public void done(List<ParseObject> objects, ParseException e)
+            public void done(List<RidersClass> objects, ParseException e)
             {
                 if (e == null)
                 {
                     if (objects.size() > 0)
                     {
-                        //this could in the future lead to some problems
-                        //my thoughts are if somebody were to join while calculating this, then the position would get changed and theyd recieve the wrong user
-                        //but for now this is the best I can do
-                        rider = objects.get(position);
-                        ridersLocation = rider.getParseGeoPoint("location");
+                            //this could in the future lead to some problems
+                            //my thoughts are if somebody were to join while calculating this, then the position would get changed and theyd recieve the wrong user
+                            //but for now this is the best I can do
+                            rider = objects.get(position);
 
-                        LatLng driversLatLng = new LatLng(distanceActivity.driver.driverGeo.getLatitude(), distanceActivity.driver.driverGeo.getLongitude());
-                        LatLng ridersLatLng = new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude());
+                            LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
+                            LatLng ridersLatLng = new LatLng(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude());
 
-                        mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
-                        mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
-                        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
+                            mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
+                            mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
+                            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
 
-                        //all this animates the camera to fit between the two locations
-                        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                        builder.include(driversLatLng);
-                        builder.include(ridersLatLng);
-                        LatLngBounds bounds = builder.build();
+                            //all this animates the camera to fit between the two locations
+                            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                            builder.include(driversLatLng);
+                            builder.include(ridersLatLng);
+                            LatLngBounds bounds = builder.build();
 
-                        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                        mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
-                        {
-                            @Override
-                            public void onCancel()
+                            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+                            mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
                             {
-                            }
+                                @Override
+                                public void onCancel()
+                                {
+                                }
 
-                            @Override
-                            public void onFinish()
-                            {
-                                CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
-                                mMap.animateCamera(zout);
-                            }
-                        });
+                                @Override
+                                public void onFinish()
+                                {
+                                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                                    mMap.animateCamera(zout);
+                                }
+                            });
                     }
                 }
             }

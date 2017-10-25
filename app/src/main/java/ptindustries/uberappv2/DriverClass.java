@@ -23,19 +23,25 @@ class DriverClass extends ParseObject
         driverGeo = null;
     }
 
-    public void setLocation(Location location)
+    void setLastKnownLocation(Location location)
     {
-        put("location", location);
+        put("lastKnownLocation", location);
         lastKnownLocation = location;
 
         ParseGeoPoint dGeo = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
-        put("driverGeoPoint", dGeo);
+        put("driversGeoPoint", dGeo);
         driverGeo = dGeo;
     }
 
-    public String getUsername() { return username; }
-    public ParseGeoPoint getDriverGeo() { return driverGeo; }
-    public Location getLastKnownLocation() { return lastKnownLocation; }
+    void setParseGeo(ParseGeoPoint dGeo)
+    {
+        put("driversGeoPoint", dGeo);
+        driverGeo = dGeo;
+    }
+
+    String getUsername() { return username; }
+    ParseGeoPoint getDriverGeoPoint() { return driverGeo; }
+    Location getLastKnownLocation() { return lastKnownLocation; }
 
 
 
