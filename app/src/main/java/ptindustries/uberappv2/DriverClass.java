@@ -15,17 +15,17 @@ class DriverClass extends ParseObject
     private Location lastKnownLocation;
     private ParseGeoPoint driverGeo;
 
-    DriverClass()
+    DriverClass() {}
+
+    void setUsername(String username)
     {
-        put("username", ParseUser.getCurrentUser().getUsername());
-        username = ParseUser.getCurrentUser().getUsername();
-        lastKnownLocation = null;
-        driverGeo = null;
+        put("username", username);
+        this.username = username;
     }
 
     void setLastKnownLocation(Location location)
     {
-        put("lastKnownLocation", location);
+        //put("lastKnownLocation", location);
         lastKnownLocation = location;
 
         ParseGeoPoint dGeo = new ParseGeoPoint(location.getLatitude(), location.getLongitude());

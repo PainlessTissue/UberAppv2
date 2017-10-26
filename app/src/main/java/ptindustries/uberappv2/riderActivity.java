@@ -57,6 +57,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         rider = new RidersClass();
+        rider.setUsername(ParseUser.getCurrentUser().getUsername());
     }
 
     public void callUber(View view)
@@ -95,9 +96,9 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
                 @Override
                 public void done(ParseException e) {
                     if(e == null)
-                        Log.i("Delete", "Sucessful");
+                        Log.i("Delete", "Successful");
                     else
-                        Log.i("Delete", "unsucessful");
+                        Log.i("Delete", "unsuccessful");
                 }
             });
 

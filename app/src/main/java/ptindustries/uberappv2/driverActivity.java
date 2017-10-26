@@ -32,7 +32,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
     //this object is used so, when the users clicks on who they want to drive, we can modify their
     //data throughout the program
-    public static RidersClass rider;
+    public RidersClass rider;
 
     protected void confirmUber(View view)
     {
@@ -68,7 +68,6 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     }
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -95,14 +94,16 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     {
         mMap = googleMap;
 
+        // TODO: 10/25/2017 You need to play with the rider variable for whatever reason. You need to make your own variable instead of instantiating it like it is now
+        rider = new RidersClass();
+
         Intent intent = getIntent();
 
         final int position = intent.getIntExtra("location", 90);
 
-        ParseQuery<RidersClass> q = new ParseQuery<>("RidersClass");
-        q.whereNear("driversLocation", distanceActivity.driver.getDriverGeoPoint());
+        ParseQuery<RidersClass> q = ParseQuery.getQuery(RidersClass.class);
+        q.whereNear("ridersGeo", distanceActivity.driver.getDriverGeoPoint());
 
-        // TODO: 10/25/2017 Look a this entire loop. May cause crashes
         q.findInBackground(new FindCallback<RidersClass>()
         {
             @Override
@@ -112,42 +113,56 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                 {
                     if (objects.size() > 0)
                     {
-                            //this could in the future lead to some problems
-                            //my thoughts are if somebody were to join while calculating this, then the position would get changed and theyd recieve the wrong user
-                            //but for now this is the best I can do
-                            rider = objects.get(position);
-
-                            LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
-                            LatLng ridersLatLng = new LatLng(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude());
-
-                            mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
-                            mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
-                            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
-
-                            //all this animates the camera to fit between the two locations
-                            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                            builder.include(driversLatLng);
-                            builder.include(ridersLatLng);
-                            LatLngBounds bounds = builder.build();
-
-                            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                            mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
+                        int count = 0;
+                        for (RidersClass obj : objects)
+                        {
+                            if (count == position)
                             {
-                                @Override
-                                public void onCancel()
-                                {
-                                }
+                                rider.setGeoLocation(obj.getParseGeoPoint("ridersGeo"));
+                                rider.setUsername(obj.getString("username"));
+                                //Log.i("OBJ USERNAME", obj.getUsername());
+                                break;
+                            }
 
-                                @Override
-                                public void onFinish()
-                                {
-                                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
-                                    mMap.animateCamera(zout);
-                                }
-                            });
+                            count++;
+                        }
                     }
                 }
             }
         });
+
+        if (rider != null)
+        {
+            LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
+            LatLng ridersLatLng = new LatLng(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude());
+
+            mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
+            mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
+            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
+
+            //all this animates the camera to fit between the two locations
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(driversLatLng);
+            builder.include(ridersLatLng);
+            LatLngBounds bounds = builder.build();
+
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+            mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
+            {
+                @Override
+                public void onCancel()
+                {
+                }
+
+
+                @Override
+                public void onFinish()
+                {
+                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                    mMap.animateCamera(zout);
+                }
+            });
+        }
     }
 }
+

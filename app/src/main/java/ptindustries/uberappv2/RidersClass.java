@@ -17,20 +17,17 @@ class RidersClass extends ParseObject
     private ParseGeoPoint driversGeo;
 
 
-    RidersClass()
-    {
-        put("username", ParseUser.getCurrentUser().getUsername());
-        username = ParseUser.getCurrentUser().getUsername();
+    RidersClass() {}
 
-        lastKnownLocation = null;
-        ridersGeo = null;
-        driversLocation = null;
-        driversGeo = null;
+    void setUsername(String username)
+    {
+        put("username", username);
+        this.username = username;
     }
 
     void setLastKnownLocation(Location lastKnownLocation)
     {
-        put("ridersLocation", lastKnownLocation);
+        //put("ridersLocation", lastKnownLocation);
         this.lastKnownLocation = lastKnownLocation;
 
         ParseGeoPoint rGeo = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
@@ -46,13 +43,14 @@ class RidersClass extends ParseObject
 
     void setDriversLocation(Location driversLocation) {
 
-        put("driversLocation", driversLocation);
+        //put("driversLocation", driversLocation);
         this.driversLocation = driversLocation;
 
         ParseGeoPoint dGeo = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
         put("ridersGeo", dGeo);
         this.ridersGeo = dGeo;
     }
+
 
     String getUsername() { return username; }
     Location getLastKnownLocation() { return lastKnownLocation; }

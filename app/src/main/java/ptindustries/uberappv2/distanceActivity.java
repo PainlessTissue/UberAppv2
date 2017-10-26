@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -46,34 +47,29 @@ public class distanceActivity extends AppCompatActivity
         listView.setAdapter(arrayAdapter);
 
         driver = new DriverClass();
+        driver.setUsername(ParseUser.getCurrentUser().getUsername());
 
         locationShit();
 
         if(driver.getLastKnownLocation() != null)
         {
-            //previous code (may not be needed)
-            //driver.setParseGeo(new ParseGeoPoint(driver.getLastKnownLocation().getLatitude(), driver.getLastKnownLocation().getLongitude()));
-
-            // TODO: 10/25/2017 Take a look at this. This may be able to be changed
-            ParseQuery<ParseObject> q = new ParseQuery<>("RidersClass");
+            ParseQuery<RidersClass> q = ParseQuery.getQuery(RidersClass.class);
             q.whereNear("ridersGeo", driver.getDriverGeoPoint());
 
-
-            q.findInBackground(new FindCallback<ParseObject>()
+            q.findInBackground(new FindCallback<RidersClass>()
             {
-                @Override
-                public void done(List<ParseObject> objects, ParseException e)
+                public void done(List<RidersClass> objects, ParseException exception)
                 {
-                    if(e == null)
-                        if(objects.size() > 0)
-                            for(ParseObject obj : objects)
-                            {
-                                ParseGeoPoint riderGeo = obj.getParseGeoPoint("ridersGeo");
-                                double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)); //round the number so it isnt huge
-                                arrayList.add(Double.toString(roundedNumber) + " miles away");
-                            }
+                    for (RidersClass obj : objects)
+                    {
+                        ParseGeoPoint riderGeo = obj.getParseGeoPoint("ridersGeo");
+                        //double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)); //round the number so it isnt huge
+                        //arrayList.add(Double.toString(roundedNumber) + " miles away");
+                        arrayList.add(Double.toString(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)));
+                    }
                 }
             });
+
         }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -91,8 +87,6 @@ public class distanceActivity extends AppCompatActivity
 
 
 
-
-
     public void locationShit()
     {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -104,7 +98,7 @@ public class distanceActivity extends AppCompatActivity
             {
                 driver.setLastKnownLocation(location);
 
-                driverActivity.rider.setDriversLocation(location);
+                //driverActivity.rider.setDriversLocation(location);
             }
 
             @Override
