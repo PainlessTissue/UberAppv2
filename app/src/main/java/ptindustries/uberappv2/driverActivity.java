@@ -32,23 +32,25 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
     //this object is used so, when the users clicks on who they want to drive, we can modify their
     //data throughout the program
-    public RidersClass rider;
+
+    RidersClass rider;
 
     protected void confirmUber(View view)
     {
+
         //as much as I wouldnt like to make all these variables,
         //it makes setting the api much nicer looking
         double dLat = distanceActivity.driver.getDriverGeoPoint().getLatitude();
         double dLong = distanceActivity.driver.getDriverGeoPoint().getLongitude();
-        double rLat = rider.getLastKnownLocation().getLatitude();
-        double rLong = rider.getLastKnownLocation().getLongitude();
+        double rLat = rider.getRidersGeo().getLatitude();
+        double rLong = rider.getRidersGeo().getLongitude();
 
         //this starts up google maps with the direction between two points
         final Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
 
         //this updates and tells the rider who
-        rider.setDriversLocation(distanceActivity.driver.getLastKnownLocation());
+        rider.setDriversLocation(distanceActivity.driver.getDriverGeoPoint());
 /*        rider.saveInBackground(new SaveCallback()
         {
             @Override
@@ -60,8 +62,8 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                 else
                     Toast.makeText(driverActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
             }
-        });
-*/
+        });*/
+
         rider.saveInBackground();
 
         startActivity(intent);
@@ -77,6 +79,8 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
     }
 
 
@@ -92,6 +96,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
+
         mMap = googleMap;
 
         // TODO: 10/25/2017 You need to play with the rider variable for whatever reason. You need to make your own variable instead of instantiating it like it is now
@@ -120,7 +125,6 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                             {
                                 rider.setGeoLocation(obj.getParseGeoPoint("ridersGeo"));
                                 rider.setUsername(obj.getString("username"));
-                                //Log.i("OBJ USERNAME", obj.getUsername());
                                 break;
                             }
 
@@ -128,41 +132,38 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                         }
                     }
                 }
+
+                if (rider.getRidersGeo() != null)
+                {
+                    LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
+                    LatLng ridersLatLng = new LatLng(rider.getRidersGeo().getLatitude(), rider.getRidersGeo().getLongitude());
+
+                    mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
+                    mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
+                    //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
+
+                    //all this animates the camera to fit between the two locations
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                    builder.include(driversLatLng);
+                    builder.include(ridersLatLng);
+                    LatLngBounds bounds = builder.build();
+
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+                    mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
+                    {
+                        @Override
+                        public void onCancel() {}
+
+                        @Override
+                        public void onFinish()
+                        {
+                            CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                            mMap.animateCamera(zout);
+                        }
+                    });
+                }
             }
         });
-
-        if (rider != null)
-        {
-            LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
-            LatLng ridersLatLng = new LatLng(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude());
-
-            mMap.addMarker(new MarkerOptions().position(ridersLatLng).title("Riders location"));
-            mMap.addMarker(new MarkerOptions().position(driversLatLng).title("Drivers location"));
-            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(ridersLocation.getLatitude(), ridersLocation.getLongitude()), 10));
-
-            //all this animates the camera to fit between the two locations
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(driversLatLng);
-            builder.include(ridersLatLng);
-            LatLngBounds bounds = builder.build();
-
-            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-            mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
-            {
-                @Override
-                public void onCancel()
-                {
-                }
-
-
-                @Override
-                public void onFinish()
-                {
-                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
-                    mMap.animateCamera(zout);
-                }
-            });
-        }
     }
 }
 
