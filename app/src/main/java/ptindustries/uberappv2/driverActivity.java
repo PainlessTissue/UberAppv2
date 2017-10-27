@@ -49,24 +49,22 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
         final Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
 
-        //this updates and tells the rider who
+        //this makes sure the maps travel is only called if the riders' drivers' location is correctly updated
         rider.setDriversLocation(distanceActivity.driver.getDriverGeoPoint());
-/*        rider.saveInBackground(new SaveCallback()
+        rider.saveInBackground(new SaveCallback()
         {
             @Override
             public void done(ParseException e)
             {
                 if(e == null)
                     startActivity(intent);
-
                 else
-                    Toast.makeText(driverActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                {
+                    Toast.makeText(driverActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+
+                }
             }
-        });*/
-
-        rider.saveInBackground();
-
-        startActivity(intent);
+        });
     }
 
 
@@ -79,8 +77,6 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-
     }
 
 
@@ -99,7 +95,6 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
 
         mMap = googleMap;
 
-        // TODO: 10/25/2017 You need to play with the rider variable for whatever reason. You need to make your own variable instead of instantiating it like it is now
         rider = new RidersClass();
 
         Intent intent = getIntent();
