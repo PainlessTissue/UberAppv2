@@ -24,5 +24,10 @@ class RidersDriversLocation extends ParseObject
         put("ridersDriversLocation", location);
     }
 
-    ParseGeoPoint getLocation() { return ridersDriversLocation; }
+    void deleteThis()
+    {
+        this.deleteInBackground();
+    }
+
+    ParseGeoPoint getLocation() { return getParseGeoPoint("ridersDriversLocation"); }
 }

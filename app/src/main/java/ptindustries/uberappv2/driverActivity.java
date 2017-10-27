@@ -33,7 +33,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     //this object is used so, when the users clicks on who they want to drive, we can modify their
     //data throughout the program
 
-    RidersClass rider;
+    static RidersClass rider;
 
     protected void confirmUber(View view)
     {
@@ -49,8 +49,8 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
         final Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("https://www.google.com/maps/dir/?api=1&origin=" + dLat + ", " + dLong + "&destination=" + rLat + ", " + rLong + "&travelmode=driving"));
 
-        //this makes sure the maps travel is only called if the riders' drivers' location is correctly updated
-        rider.setDriversLocation(distanceActivity.driver.getDriverGeoPoint());
+        //this makes sure the maps travel is only called if the riders' drivers' location is correctly update
+        rider.setDriver(distanceActivity.driver.getDriverGeoPoint());
         rider.saveInBackground(new SaveCallback()
         {
             @Override
@@ -92,10 +92,9 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
-
         mMap = googleMap;
 
-        rider = new RidersClass();
+        //rider = new RidersClass();
 
         Intent intent = getIntent();
 
@@ -118,6 +117,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                         {
                             if (count == position)
                             {
+                                rider = obj;
                                 rider.setGeoLocation(obj.getParseGeoPoint("ridersGeo"));
                                 rider.setUsername(obj.getString("username"));
                                 break;
@@ -128,7 +128,7 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                     }
                 }
 
-                if (rider.getRidersGeo() != null)
+                if (rider != null && rider.getRidersGeo() != null)
                 {
                     LatLng driversLatLng = new LatLng(distanceActivity.driver.getDriverGeoPoint().getLatitude(), distanceActivity.driver.getDriverGeoPoint().getLongitude());
                     LatLng ridersLatLng = new LatLng(rider.getRidersGeo().getLatitude(), rider.getRidersGeo().getLongitude());

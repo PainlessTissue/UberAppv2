@@ -43,9 +43,10 @@ public class distanceActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.listView);
         final ArrayList<String> arrayList = new ArrayList<>();
-        ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayList);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
         listView.setAdapter(arrayAdapter);
 
+        // TODO: 10/27/2017 For whatever reason, this driver creation isnt storing on parse. Need to work that out
         driver = new DriverClass();
         driver.setUsername(ParseUser.getCurrentUser().getUsername());
 
@@ -63,13 +64,12 @@ public class distanceActivity extends AppCompatActivity
                     for (RidersClass obj : objects)
                     {
                         ParseGeoPoint riderGeo = obj.getParseGeoPoint("ridersGeo");
-                        //double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)); //round the number so it isnt huge
-                        //arrayList.add(Double.toString(roundedNumber) + " miles away");
-                        arrayList.add(Double.toString(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)));
+                        double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo) * 10) / 10; //round the number so it isnt huge
+                        arrayList.add(Double.toString(Math.round(roundedNumber)) + " miles away");
+                        //arrayList.add(Double.toString(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)));
                     }
                 }
             });
-
         }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -98,7 +98,9 @@ public class distanceActivity extends AppCompatActivity
             {
                 driver.setLastKnownLocation(location);
 
-                //driverActivity.rider.setDriversLocation(location);
+                //whenever the driver changes location we will update the rider's drivers' location
+                if(driverActivity.rider  != null)
+                    driverActivity.rider.setDriver(new ParseGeoPoint(location.getLatitude(), location.getLongitude()));
             }
 
             @Override
@@ -118,13 +120,15 @@ public class distanceActivity extends AppCompatActivity
 
             else
             {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+                //10 seconds minimum, 5 meters distance
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 5, locationListener);
                 driver.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
             }
         }
 
         else
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            //10 seconds minimum, 5 meters distance
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 5, locationListener);
 
     }
 }

@@ -35,6 +35,8 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class riderActivity extends FragmentActivity implements OnMapReadyCallback
 {
@@ -58,12 +60,24 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         rider = new RidersClass();
         rider.setUsername(ParseUser.getCurrentUser().getUsername());
+
+        // TODO: 10/27/2017 find a better place to put this. I dont like it
+        int delay = 0; // delay for 0 sec.
+        int period = 10000; // repeat every 10 sec.
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask()
+        {
+            public void run()
+            {
+                updateDriverMap();
+            }
+        }, delay, period);
     }
 
     public void callUber(View view)
     {
         final Button uberButton = (Button) findViewById(R.id.callUberButton);
-        if(!uberCalled)
+        if(!uberCalled) //uber hasnt been called, calling now
         {
             if(rider.getLastKnownLocation() != null)
             {
@@ -85,66 +99,75 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
                             Toast.makeText(riderActivity.this, "Something happened, try again later", Toast.LENGTH_SHORT).show();
                     }
                 });
+
+                ParseGeoPoint driversLocation = rider.getDriversGeo();
+
+                if(driversLocation != null) //if they have a driver
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(driversLocation.getLatitude(), driversLocation.getLongitude())).title("Your drivers location"));
             }
         }
 
-        else //uber has been called
+        else //uber has been called, cancelling uber
         {
             //since rider is a parseObject instead of just a class, we can delete it right from Parse
             //instead of looping through to find it (like in previous branch)
-            rider.deleteInBackground(new DeleteCallback() {
-                @Override
-                public void done(ParseException e) {
-                    if(e == null)
-                        Log.i("Delete", "Successful");
-                    else
-                        Log.i("Delete", "unsuccessful");
-                }
-            });
+            //I also made a method because now we have to delete the RiderClass and the RidersDriversLocation class
+            rider.deleteRider();
 
             uberCalled = false;
             uberButton.setText(R.string.callUber);
         }
     }
 
-    public void updateMap(final Location location)
+    public void updateMap(Location location)
     {
         if(mMap != null)
         {
+            rider.setLastKnownLocation(location);
+
             mMap.clear();
 
+            //setting the current riders location on map
             mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("Your location"));
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
 
-            if(rider.getDriversGeo() != null)
-            {
-                LatLng driversLatLng = new LatLng(rider.getDriversGeo().getLatitude(), rider.getDriversGeo().getLongitude());
-                mMap.addMarker(new MarkerOptions().title("Your drivers location").position(driversLatLng));
+            updateDriverMap();
 
-                //all this animates the camera to fit between the two locations
-                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                builder.include(driversLatLng);
-                builder.include(new LatLng(location.getLatitude(), location.getLongitude()));
-                LatLngBounds bounds = builder.build();
-
-                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
-                {
-                    @Override
-                    public void onCancel() {}
-
-                    @Override
-                    public void onFinish()
-                    {
-                        CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
-                        mMap.animateCamera(zout);
-                    }
-                });
-            }
         }
 
     }
 
+    //attempting to set the drivers location (if they have one)
+    void updateDriverMap()
+    {
+        if (rider.getDriversGeo() != null)
+        {
+            LatLng driversLatLng = new LatLng(rider.getDriversGeo().getLatitude(), rider.getDriversGeo().getLongitude());
+            mMap.addMarker(new MarkerOptions().title("Your drivers location").position(driversLatLng));
+
+            //all this animates the camera to fit between the two locations
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(driversLatLng);
+            builder.include(new LatLng(rider.getLastKnownLocation().getLatitude(), rider.getLastKnownLocation().getLongitude()));
+            LatLngBounds bounds = builder.build();
+
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+            mMap.animateCamera(cu, new GoogleMap.CancelableCallback()
+            {
+                @Override
+                public void onCancel()
+                {
+                }
+
+                @Override
+                public void onFinish()
+                {
+                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-.5f);
+                    mMap.animateCamera(zout);
+                }
+            });
+        }
+    }
 
     public void locationShit()
     {
@@ -153,7 +176,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
         locationListener = new LocationListener()
         {
             @Override
-            public void onLocationChanged(Location location)
+            public void onLocationChanged(final Location location)
             {
                 rider.setLastKnownLocation(location);
 
@@ -187,6 +210,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         else
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
 
     }
 
