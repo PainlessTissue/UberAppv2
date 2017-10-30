@@ -6,6 +6,8 @@ Parse Server objects.
 
 Each class is a ParseObject, but they store their own information in a different way than if I just used ParseObjects
 
+I recommend looking at my "ParseClass" branch as that has the most up to date code with best class implementation
+
 App is not fully functioning as of yet, but all necessary code is there to run the app without crashes
 
 This app uses Parse Server to store data in the cloud. All necessary files are in the repository 
