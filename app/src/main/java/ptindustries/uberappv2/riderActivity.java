@@ -132,9 +132,7 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
 
             updateDriverMap();
-
         }
-
     }
 
     //attempting to set the drivers location (if they have one)
@@ -201,7 +199,13 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             else
             {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+                if(LocationManager.GPS_PROVIDER != null)
+                    rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+                else
+                    rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+
 
                 if(rider.getLastKnownLocation() != null)
                     updateMap(rider.getLastKnownLocation());
@@ -210,8 +214,6 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         else
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-
     }
 
     @Override
@@ -224,7 +226,12 @@ public class riderActivity extends FragmentActivity implements OnMapReadyCallbac
             {
                 //locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+                if(LocationManager.GPS_PROVIDER != null)
+                    rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+                else
+                    rider.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
 
                 updateMap(rider.getLastKnownLocation());
             }

@@ -59,10 +59,8 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
                 if(e == null)
                     startActivity(intent);
                 else
-                {
                     Toast.makeText(driverActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
 
-                }
             }
         });
     }
@@ -93,8 +91,6 @@ public class driverActivity extends FragmentActivity implements OnMapReadyCallba
     public void onMapReady(GoogleMap googleMap)
     {
         mMap = googleMap;
-
-        //rider = new RidersClass();
 
         Intent intent = getIntent();
 

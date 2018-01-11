@@ -43,7 +43,7 @@ public class distanceActivity extends AppCompatActivity
 
         ListView listView = (ListView) findViewById(R.id.listView);
         final ArrayList<String> arrayList = new ArrayList<>();
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
         listView.setAdapter(arrayAdapter);
 
         // TODO: 10/27/2017 For whatever reason, this driver creation isnt storing on parse. Need to work that out
@@ -64,10 +64,10 @@ public class distanceActivity extends AppCompatActivity
                     for (RidersClass obj : objects)
                     {
                         ParseGeoPoint riderGeo = obj.getParseGeoPoint("ridersGeo");
-                        double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo) * 10) / 10; //round the number so it isnt huge
-                        arrayList.add(Double.toString(Math.round(roundedNumber)) + " miles away");
-                        //arrayList.add(Double.toString(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo)));
+                        double roundedNumber = Math.round(driver.getDriverGeoPoint().distanceInMilesTo(riderGeo) * 100.0) / 100.0; //round the number so it isnt huge
+                        arrayList.add(Double.toString(roundedNumber) + " miles away");
                     }
+                    arrayAdapter.notifyDataSetChanged();
                 }
             });
         }
@@ -122,7 +122,12 @@ public class distanceActivity extends AppCompatActivity
             {
                 //10 seconds minimum, 5 meters distance
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 5, locationListener);
-                driver.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+                //this additon is made for a small chance of bugs
+                if(LocationManager.GPS_PROVIDER != null)
+                    driver.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+                else
+                    driver.setLastKnownLocation(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
             }
         }
 
